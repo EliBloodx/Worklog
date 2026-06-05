@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard de horas{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="dashboard-hero mb-4 p-4 p-md-5 rounded-4 text-white">
+	<div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+		<div>
+			<p class="dashboard-kicker mb-1">Control de horas</p>
+			<h1 class="h3 mb-0">Dashboard operativo</h1>
+		</div>
+		<div class="text-md-end">
+			<p class="mb-0 dashboard-subtitle">Seguimiento de productividad por actividad y categoria</p>
+		</div>
+	</div>
+</section>
+
+<form class="row g-2 mb-4" method="get" action="{{ url_for('reports.reportes') }}">
+	<div class="col-md-2">
+		<input type="date" class="form-control" name="fecha" value="{{ filtros.fecha }}">
+	</div>
+	<div class="col-md-2">
+		<input type="date" class="form-control" name="fecha_desde" value="{{ filtros.fecha_desde }}" title="Fecha desde">
+	</div>
+	<div class="col-md-2">
+		<input type="date" class="form-control" name="fecha_hasta" value="{{ filtros.fecha_hasta }}" title="Fecha hasta">
+	</div>
+	<div class="col-md-3">
+		<input type="text" class="form-control" name="actividad" placeholder="Actividad" value="{{ filtros.actividad }}">
+	</div>
+	<div class="col-md-2">
+		<select class="form-select" name="estado">
+			<option value="">Todos los estados</option>
+			<option value="pendiente" {{ 'selected' if filtros.estado == 'pendiente' else '' }}>Pendiente</option>
+			<option value="en_progreso" {{ 'selected' if filtros.estado == 'en_progreso' else '' }}>En progreso</option>
+			<option value="completado" {{ 'selected' if filtros.estado == 'completado' else '' }}>Completado</option>
+		</select>
+	</div>
+	<div class="col-md-1 d-flex gap-2">
+		<button class="btn btn-outline-primary" type="submit">Aplicar filtros</button>
+		<a class="btn btn-outline-secondary" href="{{ url_for('reports.reportes') }}">Limpiar</a>
+	</div>
+</form>
+
+
+<div class="row g-3 mb-4">
+	<div class="col-12 col-md-6 col-xl-3">
+		<div class="card stat-card h-100 border-0 shadow-sm">
+			<div class="card-body">
+				<p class="stat-label mb-1">Total horas trabajadas</p>
+				<p class="stat-value mb-0">{{ '%.2f'|format(total_horas) }} h</p>
+			</div>
+		</div>
+	</div>
+	<div class="col-12 col-md-6 col-xl-3">
+		<div class="card stat-card h-100 border-0 shadow-sm">
+			<div class="card-body">
+				<p class="stat-label mb-1">Total registros</p>
+				<p class="stat-value mb-0">{{ total_registros }}</p>
+			</div>
+		</div>
+	</div>
+	<div class="col-12 col-md-6 col-xl-3">
+		<div class="card stat-card h-100 border-0 shadow-sm">
+			<div class="card-body">
+				<p class="stat-label mb-1">Promedio por registro</p>
+				<p class="stat-value mb-0">{{ '%.2f'|format(promedio_horas) }} h</p>
+			</div>
+		</div>
+	</div>
+	<div class="col-12 col-md-6 col-xl-3">
+		<div class="card stat-card h-100 border-0 shadow-sm">
+			<div class="card-body">
+				<p class="stat-label mb-1">Actividades frecuentes</p>
+				<p class="stat-value mb-0">{{ actividades_unicas }}</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row g-3">
+	<div class="col-12 col-xl-6">
+		<div class="card h-100 border-0 shadow-sm">
+			<div class="card-body">
+				<h2 class="h5 mb-3">Actividades mas frecuentes</h2>
+				{% if actividades_frecuentes %}
+				<div class="table-responsive">
+					<table class="table align-middle mb-0">
+						<thead>
+							<tr>
+								<th>Actividad</th>
+								<th>Veces</th>
+								<th>Horas</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for item in actividades_frecuentes %}
+							<tr>
+								<td>{{ item.actividad }}</td>
+								<td><span class="badge text-bg-primary rounded-pill">{{ item.veces }}</span></td>
+								<td>{{ '%.2f'|format(item.horas) }} h</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<p class="text-muted mb-0">No hay datos para mostrar en este filtro.</p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
+	<div class="col-12 col-xl-6">
+		<div class="card h-100 border-0 shadow-sm">
+			<div class="card-body">
+				<h2 class="h5 mb-3">Horas por categoria</h2>
+				{% if horas_por_categoria %}
+				{% set max_horas = horas_por_categoria[0].horas %}
+				<div class="d-flex flex-column gap-3">
+					{% for c in horas_por_categoria %}
+					<div>
+						<div class="d-flex justify-content-between small mb-1">
+							<span>{{ c.categoria }}</span>
+							<span>{{ '%.2f'|format(c.horas) }} h</span>
+						</div>
+						<div class="progress" style="height: 10px;">
+							<div class="progress-bar dashboard-progress" role="progressbar" style="width: {{ (c.horas / max_horas * 100) if max_horas > 0 else 0 }}%"></div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+				{% else %}
+				<p class="text-muted mb-0">No hay categorias para el filtro seleccionado.</p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
+	<div class="col-12">
+		<div class="card border-0 shadow-sm">
+			<div class="card-body">
+				<h2 class="h5 mb-3">Registros recientes</h2>
+				{% if registros_recientes %}
+				<div class="table-responsive">
+					<table class="table table-hover align-middle mb-0">
+						<thead>
+							<tr>
+								<th>Fecha</th>
+								<th>Actividad</th>
+								<th>Inicio</th>
+								<th>Fin</th>
+								<th>Horas</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for r in registros_recientes %}
+							<tr>
+								<td>{{ r.fecha }}</td>
+								<td>{{ r.actividad }}</td>
+								<td>{{ r.hora_inicio }}</td>
+								<td>{{ r.hora_fin }}</td>
+								<td>{{ '%.2f'|format(r.horas_totales) }} h</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<p class="text-muted mb-0">No hay registros recientes.</p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

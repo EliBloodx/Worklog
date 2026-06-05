@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de trabajo{% endblock %}
+
+{% block page_title %}Historial de registros{% endblock %}
+
+{% block content %}
+<div class="page-header">
+	<h1 class="page-header-title">
+		<i class="bi bi-journal-text me-2 text-primary"></i>Historial de registros
+	</h1>
+	<div class="d-flex gap-2 flex-wrap">
+		<a class="btn btn-success d-flex align-items-center gap-1"
+		   href="{{ url_for('records.exportar', fecha=filtros.fecha, fecha_desde=filtros.fecha_desde, fecha_hasta=filtros.fecha_hasta, actividad=filtros.actividad, estado=filtros.estado) }}">
+			<i class="bi bi-file-earmark-excel"></i><span>Exportar Excel</span>
+		</a>
+		<a class="btn btn-primary d-flex align-items-center gap-1"
+		   href="{{ url_for('records.crear_registro') }}">
+			<i class="bi bi-plus-lg"></i><span>Nuevo registro</span>
+		</a>
+	</div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+	<div class="card-body">
+		<p class="text-muted small mb-3 fw-semibold text-uppercase" style="letter-spacing:.05em">
+			<i class="bi bi-funnel me-1"></i>Filtros
+		</p>
+		<form class="row g-2" method="get" action="{{ url_for('records.index') }}">
+			<div class="col-12 col-sm-6 col-md-2">
+				<label class="form-label">Fecha exacta</label>
+				<input type="date" class="form-control" name="fecha" value="{{ filtros.fecha }}">
+			</div>
+			<div class="col-12 col-sm-6 col-md-2">
+				<label class="form-label">Desde</label>
+				<input type="date" class="form-control" name="fecha_desde" value="{{ filtros.fecha_desde }}">
+			</div>
+			<div class="col-12 col-sm-6 col-md-2">
+				<label class="form-label">Hasta</label>
+				<input type="date" class="form-control" name="fecha_hasta" value="{{ filtros.fecha_hasta }}">
+			</div>
+			<div class="col-12 col-sm-6 col-md-3">
+				<label class="form-label">Actividad</label>
+				<div class="input-group">
+					<span class="input-group-text"><i class="bi bi-search"></i></span>
+					<input type="text" class="form-control" name="actividad"
+					       placeholder="Buscar..." value="{{ filtros.actividad }}">
+				</div>
+			</div>
+			<div class="col-12 col-sm-6 col-md-2">
+				<label class="form-label">Estado</label>
+				<select class="form-select" name="estado">
+					<option value="">Todos</option>
+					<option value="pendiente" {{ 'selected' if filtros.estado == 'pendiente' }}>Pendiente</option>
+					<option value="en_progreso" {{ 'selected' if filtros.estado == 'en_progreso' }}>En progreso</option>
+					<option value="completado" {{ 'selected' if filtros.estado == 'completado' }}>Completado</option>
+				</select>
+			</div>
+			<div class="col-12 col-md-1 d-flex align-items-end gap-1">
+				<button class="btn btn-primary flex-fill" type="submit" title="Filtrar">
+					<i class="bi bi-filter"></i>
+				</button>
+				<a class="btn btn-outline-secondary flex-fill" href="{{ url_for('records.index') }}" title="Limpiar">
+					<i class="bi bi-x-lg"></i>
+				</a>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- Total de horas -->
+<div class="d-flex align-items-center gap-2 mb-3">
+	<span class="badge bg-primary fs-6 px-3 py-2">
+		<i class="bi bi-clock me-1"></i>{{ '%.2f'|format(total_horas) }} h totales
+	</span>
+	<span class="text-muted small">{{ registros|length }} registro{{ 's' if registros|length != 1 }}</span>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+	<div class="table-responsive">
+		<table class="table table-hover mb-0">
+			<thead>
+				<tr>
+					<th>Fecha</th>
+					<th>Actividad</th>
+					<th>Estado</th>
+					<th class="d-none d-md-table-cell">Descripcion</th>
+					<th>Inicio</th>
+					<th>Fin</th>
+					<th>Horas</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for r in registros %}
+				<tr>
+					<td class="fw-medium">{{ r.fecha }}</td>
+					<td>{{ r.actividad }}</td>
+					<td>
+						{% if r.estado == 'completado' %}
+						<span class="badge text-bg-success rounded-pill">
+							<i class="bi bi-check-circle me-1"></i>Completado
+						</span>
+						{% elif r.estado == 'en_progreso' %}
+						<span class="badge text-bg-warning rounded-pill">
+							<i class="bi bi-hourglass-split me-1"></i>En progreso
+						</span>
+						{% else %}
+						<span class="badge text-bg-secondary rounded-pill">
+							<i class="bi bi-circle me-1"></i>Pendiente
+						</span>
+						{% endif %}
+					</td>
+					<td class="d-none d-md-table-cell text-muted small">{{ r.descripcion }}</td>
+					<td>{{ r.hora_inicio }}</td>
+					<td>{{ r.hora_fin }}</td>
+					<td class="fw-semibold">{{ '%.2f'|format(r.horas_totales) }} h</td>
+					<td>
+						<div class="d-flex gap-1">
+							<a class="btn btn-sm btn-outline-warning"
+							   href="{{ url_for('records.editar_registro', record_id=r.id) }}"
+							   title="Editar">
+								<i class="bi bi-pencil"></i>
+							</a>
+							<form method="post"
+							      action="{{ url_for('records.eliminar_registro', record_id=r.id) }}"
+							      onsubmit="return confirm('¿Eliminar este registro?')">
+								<button class="btn btn-sm btn-outline-danger" type="submit" title="Eliminar">
+									<i class="bi bi-trash"></i>
+								</button>
+							</form>
+						</div>
+					</td>
+				</tr>
+				{% else %}
+				<tr>
+					<td colspan="8" class="text-center text-muted py-4">
+						<i class="bi bi-inbox display-6 d-block mb-2"></i>
+						No hay registros para este filtro
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}

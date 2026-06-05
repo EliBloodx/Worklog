@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Editar' if registro else 'Nuevo' }} registro{% endblock %}
+
+{% block page_title %}{{ 'Editar registro' if registro else 'Nuevo registro' }}{% endblock %}
+
+{% block content %}
+{% set _f = form_data %}
+{% set _r = registro %}
+{% set val_fecha      = (_f.fecha       if _f else (_r.fecha       if _r else '')) %}
+{% set val_actividad  = (_f.actividad   if _f else (_r.actividad   if _r else '')) %}
+{% set val_estado     = (_f.estado      if _f else (_r.estado      if _r else 'pendiente')) %}
+{% set val_descripcion= (_f.descripcion if _f else (_r.descripcion if _r else '')) %}
+{% set val_inicio     = (_f.hora_inicio if _f else (_r.hora_inicio if _r else '')) %}
+{% set val_fin        = (_f.hora_fin    if _f else (_r.hora_fin    if _r else '')) %}
+
+<div class="row justify-content-center">
+<div class="col-12 col-lg-8">
+
+<div class="page-header">
+	<h1 class="page-header-title">
+		<i class="bi bi-{% if registro %}pencil-square{% else %}plus-circle{% endif %} me-2 text-primary"></i>
+		{{ 'Editar registro' if registro else 'Nuevo registro' }}
+	</h1>
+	<a class="btn btn-outline-secondary d-flex align-items-center gap-1"
+	   href="{{ url_for('records.index') }}">
+		<i class="bi bi-arrow-left"></i>Volver
+	</a>
+</div>
+
+<div class="card">
+	<div class="card-body p-4">
+		<form method="post" class="row g-3">
+
+			<div class="col-md-4">
+				<label class="form-label">
+					<i class="bi bi-calendar3 me-1 text-primary"></i>Fecha
+				</label>
+				<input type="date" class="form-control" name="fecha" required value="{{ val_fecha }}">
+			</div>
+
+			<div class="col-md-5">
+				<label class="form-label">
+					<i class="bi bi-briefcase me-1 text-primary"></i>Actividad
+				</label>
+				<input type="text" class="form-control" name="actividad" required
+				       maxlength="120" placeholder="Nombre de la actividad"
+				       value="{{ val_actividad }}">
+			</div>
+
+			<div class="col-md-3">
+				<label class="form-label">
+					<i class="bi bi-flag me-1 text-primary"></i>Estado
+				</label>
+				<select class="form-select" name="estado" required>
+					<option value="pendiente"   {{ 'selected' if val_estado == 'pendiente' }}>
+						Pendiente
+					</option>
+					<option value="en_progreso" {{ 'selected' if val_estado == 'en_progreso' }}>
+						En progreso
+					</option>
+					<option value="completado"  {{ 'selected' if val_estado == 'completado' }}>
+						Completado
+					</option>
+				</select>
+			</div>
+
+			<div class="col-12">
+				<label class="form-label">
+					<i class="bi bi-text-paragraph me-1 text-primary"></i>Descripcion
+				</label>
+				<textarea class="form-control" name="descripcion" rows="3"
+				          maxlength="500" placeholder="Descripcion opcional...">{{ val_descripcion }}</textarea>
+			</div>
+
+			<div class="col-md-6">
+				<label class="form-label">
+					<i class="bi bi-clock me-1 text-primary"></i>Hora inicio
+				</label>
+				<input type="time" class="form-control" name="hora_inicio" required value="{{ val_inicio }}">
+			</div>
+
+			<div class="col-md-6">
+				<label class="form-label">
+					<i class="bi bi-clock-fill me-1 text-primary"></i>Hora fin
+				</label>
+				<input type="time" class="form-control" name="hora_fin" required value="{{ val_fin }}">
+			</div>
+
+			<div class="col-12 d-flex gap-2 pt-2">
+				<button class="btn btn-primary d-flex align-items-center gap-1" type="submit">
+					<i class="bi bi-floppy"></i>Guardar
+				</button>
+				<a class="btn btn-outline-secondary d-flex align-items-center gap-1"
+				   href="{{ url_for('records.index') }}">
+					<i class="bi bi-x-lg"></i>Cancelar
+				</a>
+			</div>
+
+		</form>
+	</div>
+</div>
+
+</div>
+</div>
+{% endblock %}

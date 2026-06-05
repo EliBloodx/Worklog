@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear cuenta{% endblock %}
+
+{% block content %}
+<div class="text-center text-white mb-4">
+    <div class="mb-3" style="font-size:2.8rem;">
+        <i class="bi bi-person-plus"></i>
+    </div>
+    <h1 class="h3 fw-bold">Crear cuenta</h1>
+    <p class="opacity-75 mb-0">Registra tu usuario para ingresar al sistema</p>
+</div>
+
+<div class="card border-0 shadow-lg" style="width:100%;max-width:460px;">
+    <div class="card-body p-4 p-md-5">
+        <h2 class="h5 fw-bold mb-1">Registro de usuario</h2>
+        <p class="text-muted small mb-4">Completa tus datos basicos.</p>
+
+        <form method="post" action="{{ url_for('auth.registro_usuario') }}" class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Usuario</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-at"></i></span>
+                    <input class="form-control" type="text" name="username"
+                           required minlength="3" maxlength="50" autocomplete="username"
+                           value="{{ form_data.username }}" placeholder="usuario_login">
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Nombre de usuario</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input class="form-control" type="text" name="full_name"
+                           required minlength="3" maxlength="120"
+                           value="{{ form_data.full_name }}" placeholder="Tu nombre visible">
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Correo electronico</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input class="form-control" type="email" name="email"
+                           required maxlength="160" autocomplete="email"
+                           value="{{ form_data.email }}" placeholder="nombre@correo.com">
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Contrasena</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input class="form-control" type="password" name="password"
+                           required minlength="8" autocomplete="new-password"
+                           placeholder="Minimo 8 caracteres">
+                </div>
+            </div>
+            <div class="col-12 d-grid mt-2">
+                <button class="btn btn-primary btn-lg d-flex align-items-center justify-content-center gap-2" type="submit">
+                    <i class="bi bi-person-check"></i>Crear cuenta
+                </button>
+            </div>
+            <div class="col-12 text-center mt-2">
+                <small class="text-muted">
+                    ¿Ya tienes cuenta?
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-semibold">Iniciar sesion</a>
+                </small>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
