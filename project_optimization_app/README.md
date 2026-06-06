@@ -74,6 +74,8 @@ Desde la carpeta `project_optimization_app`:
 python app.py
 ```
 
+En Windows este es el comando recomendado. Gunicorn no funciona de forma nativa en Windows porque depende de `fcntl`; por eso el arranque local usa Waitress cuando ejecutas `app.py` directamente.
+
 Luego abre:
 
 ```text
@@ -96,6 +98,38 @@ Para acceso desde otros dispositivos en tu red local, usa:
 $env:APP_HOST="0.0.0.0"
 python app.py
 ```
+
+Para producción en Render o plataformas similares, el `Procfile` debe enlazar el puerto con `--bind 0.0.0.0:$PORT`.
+
+## Despliegue en Render
+
+1. Sube el repositorio a GitHub.
+2. En Render crea un servicio `Web Service` desde ese repositorio.
+3. Configura la carpeta raíz del servicio en `Worklog/project_optimization_app`.
+4. Usa `Python 3` como runtime.
+5. Build Command:
+
+```bash
+pip install -r requirements.txt
+```
+
+6. Start Command:
+
+```bash
+gunicorn app:app --bind 0.0.0.0:$PORT
+```
+
+7. Variables de entorno recomendadas en Render:
+
+- `APP_HOST=0.0.0.0`
+- `APP_DEBUG=0`
+- `SECRET_KEY=una_clave_larga_y_segura`
+
+Notas importantes:
+
+- Render usa el puerto indicado por `$PORT`, por eso el `Procfile` y el Start Command deben enlazarlo explícitamente.
+- Si sigues usando SQLite, la base de datos vive dentro del disco del contenedor. Para datos permanentes necesitas un disco persistente o migrar a una base externa.
+- El comando local en Windows sigue siendo `python app.py`.
 
 ## Variables y configuración
 

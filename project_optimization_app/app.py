@@ -1,9 +1,16 @@
+import os
+
 from flask import Flask
 
 from config import APP_DEBUG, APP_HOST, APP_PORT, SECRET_KEY
 from modules.auth import init_login_manager
 from modules.database import init_db
 from modules.routes import register_blueprints
+
+try:
+    from waitress import serve
+except ImportError:
+    serve = None
 
 
 def create_app() -> Flask:
@@ -20,4 +27,7 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(host=APP_HOST, port=APP_PORT, debug=APP_DEBUG)
+    if os.name == "nt" and serve is not None:
+        serve(app, host=APP_HOST, port=APP_PORT)
+    else:
+        app.run(host=APP_HOST, port=APP_PORT, debug=APP_DEBUG)
