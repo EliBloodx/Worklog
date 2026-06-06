@@ -8,11 +8,19 @@
 {% set _f = form_data %}
 {% set _r = registro %}
 {% set val_fecha      = (_f.fecha       if _f else (_r.fecha       if _r else '')) %}
+{% set val_categoria  = (_f.categoria    if _f else (_r.categoria    if _r else '')) %}
+{% set val_equipo     = (_f.proyecto_equipo if _f else (_r.proyecto_equipo if _r else '')) %}
+{% set val_cliente    = (_f.cliente_referencia if _f else (_r.cliente_referencia if _r else '')) %}
 {% set val_actividad  = (_f.actividad   if _f else (_r.actividad   if _r else '')) %}
 {% set val_estado     = (_f.estado      if _f else (_r.estado      if _r else 'pendiente')) %}
 {% set val_descripcion= (_f.descripcion if _f else (_r.descripcion if _r else '')) %}
 {% set val_inicio     = (_f.hora_inicio if _f else (_r.hora_inicio if _r else '')) %}
 {% set val_fin        = (_f.hora_fin    if _f else (_r.hora_fin    if _r else '')) %}
+{% if current_user.is_admin and subject_user and subject_user.id != current_user.id %}
+{% set back_url = url_for('records.admin_usuario_registros', user_id=subject_user.id) %}
+{% else %}
+{% set back_url = url_for('records.mis_registros') if not current_user.is_admin else url_for('records.index') %}
+{% endif %}
 
 <div class="row justify-content-center">
 <div class="col-12 col-lg-8">
@@ -22,8 +30,11 @@
 		<i class="bi bi-{% if registro %}pencil-square{% else %}plus-circle{% endif %} me-2 text-primary"></i>
 		{{ 'Editar registro' if registro else 'Nuevo registro' }}
 	</h1>
+	{% if current_user.is_admin and subject_user %}
+	<span class="badge text-bg-light border">Usuario: {{ subject_user.full_name or subject_user.username }}</span>
+	{% endif %}
 	<a class="btn btn-outline-secondary d-flex align-items-center gap-1"
-	   href="{{ url_for('records.index') }}">
+	   href="{{ back_url }}">
 		<i class="bi bi-arrow-left"></i>Volver
 	</a>
 </div>
@@ -36,16 +47,36 @@
 				<label class="form-label">
 					<i class="bi bi-calendar3 me-1 text-primary"></i>Fecha
 				</label>
-				<input type="date" class="form-control" name="fecha" required value="{{ val_fecha }}">
+				<input type="date" class="form-control" id="recordDate" name="fecha" required value="{{ val_fecha }}">
+			</div>
+
+			<div class="col-md-4">
+				<label class="form-label">
+					<i class="bi bi-grid-1x2 me-1 text-primary"></i>Categoria
+				</label>
+				<select class="form-select" id="recordCategory" name="categoria" required>
+					<option value="">Selecciona una categoria</option>
+					{% for key, value in activity_catalog.items() %}
+					<option value="{{ key }}" {{ 'selected' if val_categoria == key else '' }}>{{ value.label }}</option>
+					{% endfor %}
+				</select>
 			</div>
 
 			<div class="col-md-5">
 				<label class="form-label">
-					<i class="bi bi-briefcase me-1 text-primary"></i>Actividad
+					<i class="bi bi-diagram-3 me-1 text-primary"></i>Actividad
 				</label>
-				<input type="text" class="form-control" name="actividad" required
-				       maxlength="120" placeholder="Nombre de la actividad"
-				       value="{{ val_actividad }}">
+				<select class="form-select" id="recordProjectTeam" name="proyecto_equipo" required data-current-value="{{ val_equipo }}">
+					<option value="">Selecciona una categoria primero</option>
+				</select>
+			</div>
+
+			<div class="col-md-4">
+				<label class="form-label">
+					<i class="bi bi-building me-1 text-primary"></i>Identificador interno
+				</label>
+				<input type="text" class="form-control" name="cliente_referencia" maxlength="140"
+					placeholder="(Opcional) Ej: A2415, Fernando de Alba." value="{{ val_cliente }}">
 			</div>
 
 			<div class="col-md-3">
@@ -53,17 +84,12 @@
 					<i class="bi bi-flag me-1 text-primary"></i>Estado
 				</label>
 				<select class="form-select" name="estado" required>
-					<option value="pendiente"   {{ 'selected' if val_estado == 'pendiente' }}>
-						Pendiente
-					</option>
-					<option value="en_progreso" {{ 'selected' if val_estado == 'en_progreso' }}>
-						En progreso
-					</option>
-					<option value="completado"  {{ 'selected' if val_estado == 'completado' }}>
-						Completado
-					</option>
+					{% for state in state_options %}
+					<option value="{{ state.value }}" {{ 'selected' if val_estado == state.value }}>{{ state.label }}</option>
+					{% endfor %}
 				</select>
 			</div>
+
 
 			<div class="col-12">
 				<label class="form-label">
@@ -77,14 +103,15 @@
 				<label class="form-label">
 					<i class="bi bi-clock me-1 text-primary"></i>Hora inicio
 				</label>
-				<input type="time" class="form-control" name="hora_inicio" required value="{{ val_inicio }}">
+				<input type="time" class="form-control" id="recordStartTime" name="hora_inicio" required value="{{ val_inicio }}">
 			</div>
 
 			<div class="col-md-6">
 				<label class="form-label">
 					<i class="bi bi-clock-fill me-1 text-primary"></i>Hora fin
 				</label>
-				<input type="time" class="form-control" name="hora_fin" required value="{{ val_fin }}">
+				<input type="time" class="form-control" id="recordEndTime" name="hora_fin" value="{{ val_fin }}" placeholder="Opcional">
+				<div class="form-text">Dejar vacio indica que la actividad sigue en ejecucion.</div>
 			</div>
 
 			<div class="col-12 d-flex gap-2 pt-2">
@@ -92,7 +119,7 @@
 					<i class="bi bi-floppy"></i>Guardar
 				</button>
 				<a class="btn btn-outline-secondary d-flex align-items-center gap-1"
-				   href="{{ url_for('records.index') }}">
+				   href="{{ back_url }}">
 					<i class="bi bi-x-lg"></i>Cancelar
 				</a>
 			</div>
@@ -103,4 +130,98 @@
 
 </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	var dateInput = document.getElementById('recordDate');
+	var startTimeInput = document.getElementById('recordStartTime');
+	var endTimeInput = document.getElementById('recordEndTime');
+	var categorySelect = document.getElementById('recordCategory');
+	var stateSelect = document.querySelector('select[name="estado"]');
+
+	if (dateInput && !dateInput.value) {
+		dateInput.value = new Date().toISOString().slice(0, 10);
+	}
+
+	if (startTimeInput && !startTimeInput.value) {
+		startTimeInput.value = new Date().toTimeString().slice(0, 5);
+	}
+
+	var syncOpenState = function () {
+		var isOpen = !endTimeInput.value;
+		var quickCategory = categorySelect && categorySelect.value === 'registro_rapido_imcompleto';
+		var openStateValue = quickCategory ? 'registro_rapido' : 'en_progreso';
+		if (stateSelect) {
+			if (isOpen) {
+				stateSelect.value = openStateValue;
+			} else if (stateSelect.value === 'registro_rapido') {
+				stateSelect.value = 'pendiente';
+			}
+			stateSelect.disabled = isOpen;
+		}
+	};
+
+	if (endTimeInput) {
+		endTimeInput.addEventListener('input', syncOpenState);
+		endTimeInput.addEventListener('change', syncOpenState);
+	}
+
+	if (categorySelect) {
+		categorySelect.addEventListener('change', syncOpenState);
+	}
+
+	syncOpenState();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	var catalog = {{ activity_catalog|tojson }};
+	var categorySelect = document.getElementById('recordCategory');
+	var projectSelect = document.getElementById('recordProjectTeam');
+
+	if (!categorySelect || !projectSelect) {
+		return;
+	}
+
+	var preservedProject = projectSelect.dataset.currentValue || '';
+
+	var fillProjectOptions = function (categoryKey, selectedValue) {
+		projectSelect.innerHTML = '';
+		var defaultOption = document.createElement('option');
+		defaultOption.value = '';
+		defaultOption.textContent = categoryKey
+			? 'Selecciona una opcion'
+			: 'Selecciona una categoria primero';
+		projectSelect.appendChild(defaultOption);
+
+		if (!categoryKey || !catalog[categoryKey]) {
+			projectSelect.disabled = true;
+			projectSelect.value = '';
+			return;
+		}
+
+		projectSelect.disabled = false;
+		var options = catalog[categoryKey].project_options || [];
+		for (var i = 0; i < options.length; i += 1) {
+			var option = document.createElement('option');
+			option.value = options[i];
+			option.textContent = options[i];
+			projectSelect.appendChild(option);
+		}
+
+		if (selectedValue && options.indexOf(selectedValue) >= 0) {
+			projectSelect.value = selectedValue;
+		}
+	};
+
+	fillProjectOptions(categorySelect.value, preservedProject);
+
+	categorySelect.addEventListener('change', function () {
+		fillProjectOptions(categorySelect.value, '');
+	});
+});
+</script>
 {% endblock %}

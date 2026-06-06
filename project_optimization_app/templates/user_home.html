@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi inicio{% endblock %}
+
+{% block page_title %}Mi inicio{% endblock %}
+
+{% block content %}
+<section class="dashboard-hero mb-4 p-4 p-md-5 rounded-4 text-white">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+        <div>
+            <p class="dashboard-kicker mb-1">Panel personal</p>
+            <h1 class="h3 mb-0">Bienvenido, {{ current_user.full_name or current_user.username }}</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-light btn-sm" href="{{ url_for('records.crear_registro') }}">
+                <i class="bi bi-plus-lg me-1"></i>Nuevo registro
+            </a>
+            <form method="post" action="{{ url_for('records.iniciar_registro_rapido') }}">
+                <button class="btn btn-warning btn-sm" type="submit">
+                    <i class="bi bi-lightning-charge-fill me-1"></i>Iniciar registro rapido
+                </button>
+            </form>
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('records.mis_registros') }}">
+                <i class="bi bi-journal-text me-1"></i>Mis registros
+            </a>
+        </div>
+    </div>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <p class="stat-label mb-1">Total horas</p>
+                <p class="stat-value mb-0">{{ '%.2f'|format(total_horas) }} h</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <p class="stat-label mb-1">Total tareas</p>
+                <p class="stat-value mb-0">{{ total_registros }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <p class="stat-label mb-1">Promedio por tarea</p>
+                <p class="stat-value mb-0">{{ '%.2f'|format(promedio_horas) }} h</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Ultimos registros</h2>
+                {% if registros_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Actividad</th>
+                                <th>Estado</th>
+                                <th>Horas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in registros_recientes %}
+                            <tr>
+                                <td>{{ r.fecha }}</td>
+                                <td>{{ r.actividad }}</td>
+                                <td>{{ r.estado }}</td>
+                                <td>{{ '%.2f'|format(r.horas_totales) }} h</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Todavia no tienes registros.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Actividades frecuentes</h2>
+                {% if actividades_frecuentes %}
+                <div class="d-flex flex-column gap-3">
+                    {% for a in actividades_frecuentes %}
+                    <div class="d-flex justify-content-between border rounded px-3 py-2">
+                        <span>{{ a.actividad }}</span>
+                        <span class="fw-semibold">{{ a.veces }} veces | {{ '%.2f'|format(a.horas) }} h</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Aun no hay actividad suficiente para metricas.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

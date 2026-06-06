@@ -1,5 +1,5 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_required, login_user, logout_user
 
 from modules.auth import admin_required, authenticate_user, register_user
 
@@ -10,6 +10,8 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/registro-usuario", methods=["GET", "POST"])
 def registro_usuario():
     if current_user.is_authenticated:
+        if not current_user.is_admin:
+            return redirect(url_for("records.mi_inicio"))
         return redirect(url_for("records.index"))
 
     form_data = {"username": "", "full_name": "", "email": ""}
@@ -41,6 +43,8 @@ def registro_usuario():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
+        if not current_user.is_admin:
+            return redirect(url_for("records.mi_inicio"))
         return redirect(url_for("records.index"))
 
     next_url = request.args.get("next", "")
@@ -51,6 +55,8 @@ def login():
         if user:
             login_user(user)
             flash("Inicio de sesion exitoso", "success")
+            if not user.is_admin:
+                return redirect(url_for("records.mi_inicio"))
             if next_url and next_url.startswith("/"):
                 return redirect(next_url)
             return redirect(url_for("records.index"))
@@ -60,8 +66,14 @@ def login():
     return render_template("login.html", next_url=next_url)
 
 
+@auth_bp.route("/acceso-denegado")
+@login_required
+def access_denied():
+    return render_template("access_denied.html"), 403
+
+
 @auth_bp.route("/logout", methods=["POST"])
-@admin_required
+@login_required
 def logout():
     logout_user()
     flash("Sesion cerrada", "info")

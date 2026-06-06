@@ -1,15 +1,26 @@
 {% extends 'base.html' %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
 {% block title %}Dashboard de horas{% endblock %}
 
-{% block page_title %}Dashboard{% endblock %}
+{% block page_title %}{% if subject_user %}Dashboard de {{ subject_user.full_name or subject_user.username }}{% else %}Dashboard{% endif %}{% endblock %}
 
 {% block content %}
+{% if current_user.is_admin and subject_user %}
+{% set report_url = url_for('records.admin_usuario_dashboard', user_id=subject_user.id) %}
+{% else %}
+{% set report_url = url_for('reports.reportes') %}
+{% endif %}
+{% set date_range_value = filtros.fecha if filtros.fecha else (filtros.fecha_desde ~ ' to ' ~ filtros.fecha_hasta if filtros.fecha_desde and filtros.fecha_hasta else '') %}
+
 <section class="dashboard-hero mb-4 p-4 p-md-5 rounded-4 text-white">
 	<div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
 		<div>
 			<p class="dashboard-kicker mb-1">Control de horas</p>
-			<h1 class="h3 mb-0">Dashboard operativo</h1>
+			<h1 class="h3 mb-0">{% if subject_user %}Dashboard de {{ subject_user.full_name or subject_user.username }}{% else %}Dashboard operativo{% endif %}</h1>
 		</div>
 		<div class="text-md-end">
 			<p class="mb-0 dashboard-subtitle">Seguimiento de productividad por actividad y categoria</p>
@@ -17,15 +28,29 @@
 	</div>
 </section>
 
-<form class="row g-2 mb-4" method="get" action="{{ url_for('reports.reportes') }}">
-	<div class="col-md-2">
-		<input type="date" class="form-control" name="fecha" value="{{ filtros.fecha }}">
+<form class="row g-2 mb-4" method="get" action="{{ report_url }}">
+	{% if current_user.is_admin and not subject_user %}
+	<div class="col-md-3">
+		<select class="form-select" name="user_id" title="Usuario">
+			<option value="">Todos los usuarios</option>
+			{% for u in admin_users %}
+			<option value="{{ u.id }}" {{ 'selected' if selected_user_id == (u.id|string) else '' }}>
+				{{ u.full_name or u.username }} ({{ u.username }})
+			</option>
+			{% endfor %}
+		</select>
 	</div>
-	<div class="col-md-2">
-		<input type="date" class="form-control" name="fecha_desde" value="{{ filtros.fecha_desde }}" title="Fecha desde">
-	</div>
-	<div class="col-md-2">
-		<input type="date" class="form-control" name="fecha_hasta" value="{{ filtros.fecha_hasta }}" title="Fecha hasta">
+	{% endif %}
+	<div class="col-md-3">
+		<input
+			id="dashboardDateRangePicker"
+			type="text"
+			class="form-control"
+			name="date_range"
+			placeholder="Selecciona 1 fecha o un rango"
+			value="{{ date_range_value }}"
+			autocomplete="off"
+		>
 	</div>
 	<div class="col-md-3">
 		<input type="text" class="form-control" name="actividad" placeholder="Actividad" value="{{ filtros.actividad }}">
@@ -33,16 +58,24 @@
 	<div class="col-md-2">
 		<select class="form-select" name="estado">
 			<option value="">Todos los estados</option>
-			<option value="pendiente" {{ 'selected' if filtros.estado == 'pendiente' else '' }}>Pendiente</option>
-			<option value="en_progreso" {{ 'selected' if filtros.estado == 'en_progreso' else '' }}>En progreso</option>
-			<option value="completado" {{ 'selected' if filtros.estado == 'completado' else '' }}>Completado</option>
+			{% for state in state_options %}
+			<option value="{{ state.value }}" {{ 'selected' if filtros.estado == state.value else '' }}>{{ state.label }}</option>
+			{% endfor %}
 		</select>
 	</div>
 	<div class="col-md-1 d-flex gap-2">
 		<button class="btn btn-outline-primary" type="submit">Aplicar filtros</button>
-		<a class="btn btn-outline-secondary" href="{{ url_for('reports.reportes') }}">Limpiar</a>
+		<a class="btn btn-outline-secondary" href="{{ report_url }}">Limpiar</a>
 	</div>
 </form>
+
+{% if current_user.is_admin and subject_user %}
+<div class="mb-4">
+	<a class="btn btn-outline-secondary" href="{{ url_for('records.admin_usuarios') }}">
+		<i class="bi bi-arrow-left me-1"></i>Volver a gestion de usuarios
+	</a>
+</div>
+{% endif %}
 
 
 <div class="row g-3 mb-4">
@@ -175,4 +208,26 @@
 		</div>
 	</div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	var dashboardDateRangeInput = document.getElementById('dashboardDateRangePicker');
+	if (!dashboardDateRangeInput || typeof flatpickr === 'undefined') {
+		return;
+	}
+
+	flatpickr(dashboardDateRangeInput, {
+		mode: 'range',
+		dateFormat: 'Y-m-d',
+		locale: 'es',
+		allowInput: false,
+		conjunction: ' to '
+	});
+});
+</script>
 {% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion de usuarios{% endblock %}
+
+{% block page_title %}Gestion de usuarios{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="page-header-title">
+        <i class="bi bi-people me-2 text-primary"></i>Gestion de usuarios
+    </h1>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Registros</th>
+                    <th>Horas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ u.full_name or u.username }}</div>
+                        <div class="small text-muted">@{{ u.username }}</div>
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.is_admin %}
+                        <span class="badge text-bg-dark">Admin</span>
+                        {% else %}
+                        <span class="badge text-bg-secondary">Usuario</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.total_registros }}</td>
+                    <td>{{ '%.2f'|format(u.total_horas) }} h</td>
+                    <td>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('records.admin_usuario_registros', user_id=u.id) }}">
+                                <i class="bi bi-journal-text me-1"></i>Registros
+                            </a>
+                            <a class="btn btn-sm btn-outline-success" href="{{ url_for('records.admin_usuario_dashboard', user_id=u.id) }}">
+                                <i class="bi bi-bar-chart-line me-1"></i>Dashboard
+                            </a>
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('records.admin_usuario_exportar', user_id=u.id) }}">
+                                <i class="bi bi-file-earmark-excel me-1"></i>Exportar todo
+                            </a>
+                        </div>
+                        <form class="row g-1 mt-2" method="get" action="{{ url_for('records.admin_usuario_exportar', user_id=u.id) }}">
+                            <div class="col-4">
+                                <input class="form-control form-control-sm" type="date" name="fecha_desde" title="Desde">
+                            </div>
+                            <div class="col-4">
+                                <input class="form-control form-control-sm" type="date" name="fecha_hasta" title="Hasta">
+                            </div>
+                            <div class="col-3">
+                                <select class="form-select form-select-sm" name="estado" title="Estado">
+                                    <option value="">Todos</option>
+                                    {% for state in state_options %}
+                                    <option value="{{ state.value }}">{{ state.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-1 d-grid">
+                                <button class="btn btn-sm btn-success" type="submit" title="Exportar periodo">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No hay usuarios registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

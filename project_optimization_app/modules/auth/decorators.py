@@ -11,7 +11,7 @@ def admin_required(view_func):
             return redirect(url_for("auth.login"))
         if not current_user.is_admin:
             flash("No tienes permisos para acceder a esta ruta.", "danger")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.access_denied"))
         return view_func(*args, **kwargs)
 
     return wrapped_view

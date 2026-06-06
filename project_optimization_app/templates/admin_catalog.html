@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel admin{% endblock %}
+
+{% block page_title %}Panel admin{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="page-header-title">
+        <i class="bi bi-sliders me-2 text-primary"></i>Panel admin
+    </h1>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Agregar categoria</h2>
+                <form method="post" class="row g-2">
+                    <input type="hidden" name="action" value="add_category">
+                    <div class="col-12">
+                        <input class="form-control" type="text" name="category_label" placeholder="Ej: Laboratorio" required>
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button class="btn btn-primary" type="submit">Guardar categoria</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Agregar actividad</h2>
+                <form method="post" class="row g-2">
+                    <input type="hidden" name="action" value="add_activity">
+                    <div class="col-12">
+                        <select class="form-select" name="category_key" required>
+                            <option value="">Selecciona categoria</option>
+                            {% for key, category in activity_catalog.items() %}
+                            <option value="{{ key }}">{{ category.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <input class="form-control" type="text" name="activity_name" placeholder="Nueva actividad" required>
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button class="btn btn-primary" type="submit">Guardar actividad</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Agregar estado</h2>
+                <form method="post" class="row g-2">
+                    <input type="hidden" name="action" value="add_state">
+                    <div class="col-12">
+                        <input class="form-control" type="text" name="state_label" placeholder="Ej: Revisado" required>
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button class="btn btn-primary" type="submit">Guardar estado</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Categorias y actividades</h2>
+                <div class="d-flex flex-column gap-3">
+                    {% for key, category in activity_catalog.items() %}
+                    <div class="border rounded p-3">
+                        <div class="fw-semibold mb-2">{{ category.label }}</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for item in category.project_options %}
+                            <span class="badge text-bg-light border">{{ item }}</span>
+                            {% else %}
+                            <span class="text-muted small">Sin actividades registradas.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Estados disponibles</h2>
+                <div class="d-flex flex-column gap-2">
+                    {% for state in state_options %}
+                    <span class="badge text-bg-secondary text-start">{{ state.label }} ({{ state.value }})</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
