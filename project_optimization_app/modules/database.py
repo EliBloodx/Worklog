@@ -154,7 +154,6 @@ def init_db() -> None:
             "diseno": "Diseno",
             "administracion": "Administracion",
             "produccion_fabricacion": "Produccion/Fabricacion",
-            "registro_rapido_imcompleto": "Registro rapido imcompleto",
         }
         default_activity_options = {
             "taller_reparacion": [
@@ -194,6 +193,7 @@ def init_db() -> None:
                 "Capacitaciones",
                 "Reuniones",
                 "Organizacion del taller",
+                "Registro rapido",
             ],
             "produccion_fabricacion": [
                 "Corte",
@@ -203,15 +203,11 @@ def init_db() -> None:
                 "Acabado",
                 "Empaquetado",
             ],
-            "registro_rapido_imcompleto": [
-                "Registro rapido imcompleto",
-            ],
         }
         default_states = {
             "pendiente": "Pendiente",
             "en_progreso": "En progreso",
             "completado": "Completado",
-            "registro_rapido": "Registro rapido",
         }
 
         for category_key, label in default_categories.items():
@@ -232,3 +228,25 @@ def init_db() -> None:
                 "INSERT OR IGNORE INTO record_states (state_value, label) VALUES (?, ?)",
                 (state_value, label),
             )
+
+        # Migrate legacy quick-register values to the regular pending workflow.
+        conn.execute(
+            """
+            UPDATE registros
+            SET categoria = 'administracion',
+                proyecto_equipo = 'Registro rapido',
+                actividad = 'Registro rapido',
+                estado = 'pendiente'
+            WHERE categoria = 'registro_rapido_imcompleto'
+               OR estado = 'registro_rapido'
+            """
+        )
+        conn.execute(
+            "DELETE FROM activity_options WHERE category_key = 'registro_rapido_imcompleto'"
+        )
+        conn.execute(
+            "DELETE FROM activity_categories WHERE category_key = 'registro_rapido_imcompleto'"
+        )
+        conn.execute(
+            "DELETE FROM record_states WHERE state_value = 'registro_rapido'"
+        )

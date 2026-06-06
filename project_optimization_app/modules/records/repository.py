@@ -300,7 +300,9 @@ def count_quick_incomplete_records(user_id: int) -> int:
         SELECT COUNT(*) AS total
         FROM registros
         WHERE user_id = ?
-                    AND estado = 'registro_rapido'
+          AND estado = 'pendiente'
+          AND actividad = 'Registro rapido'
+          AND COALESCE(hora_fin, '') = ''
     """
 
     with connect_db() as conn:

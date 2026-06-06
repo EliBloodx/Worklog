@@ -206,6 +206,89 @@ def add_state(label: str) -> tuple[bool, str]:
     return True, "Estado agregado"
 
 
+def delete_category(category_key: str) -> tuple[bool, str]:
+    cleaned_key = category_key.strip()
+    if not cleaned_key:
+        return False, "Categoria invalida"
+
+    with connect_db() as conn:
+        exists = conn.execute(
+            "SELECT 1 FROM activity_categories WHERE category_key = ?",
+            (cleaned_key,),
+        ).fetchone()
+        if not exists:
+            return False, "La categoria no existe"
+
+        in_use = conn.execute(
+            "SELECT COUNT(*) AS total FROM registros WHERE categoria = ?",
+            (cleaned_key,),
+        ).fetchone()["total"]
+        if int(in_use) > 0:
+            return False, "No se puede eliminar una categoria con registros asociados"
+
+        conn.execute("DELETE FROM activity_categories WHERE category_key = ?", (cleaned_key,))
+    return True, "Categoria eliminada"
+
+
+def delete_activity_option(category_key: str, option_name: str) -> tuple[bool, str]:
+    cleaned_key = category_key.strip()
+    cleaned_option = option_name.strip()
+    if not cleaned_key or not cleaned_option:
+        return False, "Datos de actividad invalidos"
+
+    with connect_db() as conn:
+        exists = conn.execute(
+            "SELECT 1 FROM activity_options WHERE category_key = ? AND option_name = ?",
+            (cleaned_key, cleaned_option),
+        ).fetchone()
+        if not exists:
+            return False, "La actividad no existe"
+
+        in_use = conn.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM registros
+            WHERE categoria = ?
+              AND (proyecto_equipo = ? OR actividad = ?)
+            """,
+            (cleaned_key, cleaned_option, cleaned_option),
+        ).fetchone()["total"]
+        if int(in_use) > 0:
+            return False, "No se puede eliminar una actividad con registros asociados"
+
+        conn.execute(
+            "DELETE FROM activity_options WHERE category_key = ? AND option_name = ?",
+            (cleaned_key, cleaned_option),
+        )
+    return True, "Actividad eliminada"
+
+
+def delete_state(state_value: str) -> tuple[bool, str]:
+    cleaned_value = state_value.strip()
+    if not cleaned_value:
+        return False, "Estado invalido"
+    if cleaned_value in {"pendiente", "en_progreso", "completado"}:
+        return False, "No se puede eliminar un estado base del sistema"
+
+    with connect_db() as conn:
+        exists = conn.execute(
+            "SELECT 1 FROM record_states WHERE state_value = ?",
+            (cleaned_value,),
+        ).fetchone()
+        if not exists:
+            return False, "El estado no existe"
+
+        in_use = conn.execute(
+            "SELECT COUNT(*) AS total FROM registros WHERE estado = ?",
+            (cleaned_value,),
+        ).fetchone()["total"]
+        if int(in_use) > 0:
+            return False, "No se puede eliminar un estado con registros asociados"
+
+        conn.execute("DELETE FROM record_states WHERE state_value = ?", (cleaned_value,))
+    return True, "Estado eliminado"
+
+
 def _parse_hhmm(value: str, field_name: str) -> datetime:
     raw_value = value.strip()
     if not _TIME_HHMM_PATTERN.fullmatch(raw_value):
@@ -236,7 +319,6 @@ _ESTADO_LABELS = {
     "pendiente": "Pendiente",
     "en_progreso": "En progreso",
     "completado": "Completado",
-    "registro_rapido": "Registro rapido",
 }
 
 _HEADER_FILL = PatternFill("solid", fgColor="1D4ED8")
@@ -323,14 +405,9 @@ def normalize_form_data(form_data: dict[str, str]) -> dict[str, str | float]:
 
     estado = form_data.get("estado", "pendiente").strip().lower()
     if is_open_task:
-        if categoria == "registro_rapido_imcompleto":
-            estado = "registro_rapido"
-        else:
-            estado = "en_progreso"
+        estado = "en_progreso"
     elif estado not in valid_states:
         raise ValueError("El estado no es valido")
-    elif estado == "registro_rapido":
-        estado = "pendiente"
 
     try:
         datetime.strptime(form_data["fecha"], "%Y-%m-%d")

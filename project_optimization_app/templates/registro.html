@@ -152,12 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	var syncOpenState = function () {
 		var isOpen = !endTimeInput.value;
-		var quickCategory = categorySelect && categorySelect.value === 'registro_rapido_imcompleto';
-		var openStateValue = quickCategory ? 'registro_rapido' : 'en_progreso';
 		if (stateSelect) {
 			if (isOpen) {
-				stateSelect.value = openStateValue;
-			} else if (stateSelect.value === 'registro_rapido') {
+				stateSelect.value = 'en_progreso';
+			} else if (stateSelect.value === 'en_progreso') {
 				stateSelect.value = 'pendiente';
 			}
 			stateSelect.disabled = isOpen;
@@ -167,10 +165,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (endTimeInput) {
 		endTimeInput.addEventListener('input', syncOpenState);
 		endTimeInput.addEventListener('change', syncOpenState);
-	}
-
-	if (categorySelect) {
-		categorySelect.addEventListener('change', syncOpenState);
 	}
 
 	syncOpenState();

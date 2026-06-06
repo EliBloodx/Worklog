@@ -15,7 +15,10 @@ from modules.records import (
     build_records_page_context_for_user,
     build_reports_page_context,
     count_quick_incomplete_records,
+    delete_activity_option,
+    delete_category,
     delete_record,
+    delete_state,
     get_record_by_id,
     get_record_filters,
     get_state_options,
@@ -199,11 +202,11 @@ def iniciar_registro_rapido():
     data = {
         "user_id": current_user.id,
         "fecha": now.strftime("%Y-%m-%d"),
-        "categoria": "registro_rapido_imcompleto",
-        "proyecto_equipo": "Registro rapido imcompleto",
+        "categoria": "administracion",
+        "proyecto_equipo": "Registro rapido",
         "cliente_referencia": "",
-        "actividad": "Registro rapido imcompleto",
-        "estado": "registro_rapido",
+        "actividad": "Registro rapido",
+        "estado": "pendiente",
         "descripcion": "",
         "hora_inicio": now.strftime("%H:%M"),
         "hora_fin": "",
@@ -330,6 +333,15 @@ def admin_catalogo():
             )
         elif action == "add_state":
             ok, message = add_state(request.form.get("state_label", ""))
+        elif action == "delete_category":
+            ok, message = delete_category(request.form.get("category_key", ""))
+        elif action == "delete_activity":
+            ok, message = delete_activity_option(
+                request.form.get("category_key", ""),
+                request.form.get("activity_name", ""),
+            )
+        elif action == "delete_state":
+            ok, message = delete_state(request.form.get("state_value", ""))
         else:
             ok, message = False, "Accion no valida"
 

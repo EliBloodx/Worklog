@@ -80,10 +80,22 @@
                 <div class="d-flex flex-column gap-3">
                     {% for key, category in activity_catalog.items() %}
                     <div class="border rounded p-3">
-                        <div class="fw-semibold mb-2">{{ category.label }}</div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <div class="fw-semibold">{{ category.label }}</div>
+                            <form method="post" onsubmit="return confirm('¿Eliminar esta categoria y sus actividades?')">
+                                <input type="hidden" name="action" value="delete_category">
+                                <input type="hidden" name="category_key" value="{{ key }}">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar categoria</button>
+                            </form>
+                        </div>
                         <div class="d-flex flex-wrap gap-2">
                             {% for item in category.project_options %}
-                            <span class="badge text-bg-light border">{{ item }}</span>
+                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar esta actividad?')">
+                                <input type="hidden" name="action" value="delete_activity">
+                                <input type="hidden" name="category_key" value="{{ key }}">
+                                <input type="hidden" name="activity_name" value="{{ item }}">
+                                <button class="btn btn-sm btn-outline-secondary" type="submit">{{ item }} <i class="bi bi-x-lg ms-1"></i></button>
+                            </form>
                             {% else %}
                             <span class="text-muted small">Sin actividades registradas.</span>
                             {% endfor %}
@@ -101,7 +113,18 @@
                 <h2 class="h5 mb-3">Estados disponibles</h2>
                 <div class="d-flex flex-column gap-2">
                     {% for state in state_options %}
-                    <span class="badge text-bg-secondary text-start">{{ state.label }} ({{ state.value }})</span>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge text-bg-secondary text-start flex-grow-1">{{ state.label }} ({{ state.value }})</span>
+                        {% if state.value in ['pendiente', 'en_progreso', 'completado'] %}
+                        <span class="text-muted small">Base</span>
+                        {% else %}
+                        <form method="post" onsubmit="return confirm('¿Eliminar este estado?')">
+                            <input type="hidden" name="action" value="delete_state">
+                            <input type="hidden" name="state_value" value="{{ state.value }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                        </form>
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </div>
             </div>

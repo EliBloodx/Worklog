@@ -151,11 +151,7 @@
 					<td class="fw-medium">{{ r.fecha }}</td>
 					<td>{{ r.actividad }}</td>
 					<td>
-						{% if r.estado == 'registro_rapido' %}
-						<span class="badge text-bg-danger rounded-pill">
-							<i class="bi bi-lightning-charge-fill me-1"></i>Registro rapido
-						</span>
-						{% elif r.estado == 'completado' %}
+						{% if r.estado == 'completado' %}
 						<span class="badge text-bg-success rounded-pill">
 							<i class="bi bi-check-circle me-1"></i>Completado
 						</span>
