@@ -1,6 +1,6 @@
 import sqlite3
 
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import ADMIN_PASSWORD, ADMIN_USERNAME, DATABASE_PATH
 
@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS registros (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     fecha TEXT NOT NULL,
+    fecha_estimada TEXT NOT NULL DEFAULT '',
     categoria TEXT NOT NULL DEFAULT '',
     proyecto_equipo TEXT NOT NULL DEFAULT '',
     cliente_referencia TEXT NOT NULL DEFAULT '',
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS registros (
     hora_inicio TEXT NOT NULL,
     hora_fin TEXT NOT NULL,
     horas_totales REAL NOT NULL CHECK (horas_totales >= 0),
+    group_activity_id INTEGER DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
@@ -49,6 +51,21 @@ CREATE TABLE IF NOT EXISTS activity_options (
 CREATE TABLE IF NOT EXISTS record_states (
     state_value TEXT PRIMARY KEY,
     label TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS group_activities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    creator_user_id INTEGER NOT NULL,
+    fecha TEXT NOT NULL,
+    fecha_estimada TEXT NOT NULL DEFAULT '',
+    categoria TEXT NOT NULL,
+    actividad TEXT NOT NULL,
+    identificador_interno TEXT NOT NULL DEFAULT '',
+    descripcion TEXT NOT NULL DEFAULT '',
+    estado TEXT NOT NULL DEFAULT 'en_progreso',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    closed_at TEXT DEFAULT '',
+    FOREIGN KEY (creator_user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 """
 
@@ -84,6 +101,15 @@ def init_db() -> None:
             ).fetchone()["id"]
         else:
             admin_id = admin_exists["id"]
+            admin_row = conn.execute(
+                "SELECT password_hash FROM users WHERE id = ?",
+                (admin_id,),
+            ).fetchone()
+            if admin_row and check_password_hash(admin_row["password_hash"], "admin123"):
+                conn.execute(
+                    "UPDATE users SET password_hash = ? WHERE id = ?",
+                    (generate_password_hash(ADMIN_PASSWORD), admin_id),
+                )
 
         columns = {
             row["name"]
@@ -92,6 +118,10 @@ def init_db() -> None:
         if "estado" not in columns:
             conn.execute(
                 "ALTER TABLE registros ADD COLUMN estado TEXT NOT NULL DEFAULT 'pendiente'"
+            )
+        if "fecha_estimada" not in columns:
+            conn.execute(
+                "ALTER TABLE registros ADD COLUMN fecha_estimada TEXT NOT NULL DEFAULT ''"
             )
         if "user_id" not in columns:
             conn.execute(
@@ -112,6 +142,10 @@ def init_db() -> None:
         if "cliente_referencia" not in columns:
             conn.execute(
                 "ALTER TABLE registros ADD COLUMN cliente_referencia TEXT NOT NULL DEFAULT ''"
+            )
+        if "group_activity_id" not in columns:
+            conn.execute(
+                "ALTER TABLE registros ADD COLUMN group_activity_id INTEGER DEFAULT NULL"
             )
 
         user_columns = {
@@ -140,6 +174,7 @@ def init_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_registros_actividad ON registros (actividad)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_registros_estado ON registros (estado)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_registros_user_id ON registros (user_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_registros_group_activity_id ON registros (group_activity_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)")
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS uq_users_email ON users(email) WHERE email <> ''"
@@ -147,6 +182,9 @@ def init_db() -> None:
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_activity_options_category ON activity_options (category_key)"
         )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_group_activities_estado ON group_activities (estado)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_group_activities_fecha ON group_activities (fecha)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_group_activities_creator ON group_activities (creator_user_id)")
 
         default_categories = {
             "taller_reparacion": "Taller/Reparacion",
@@ -249,4 +287,12 @@ def init_db() -> None:
         )
         conn.execute(
             "DELETE FROM record_states WHERE state_value = 'registro_rapido'"
+        )
+
+        conn.execute(
+            """
+            UPDATE registros
+            SET fecha_estimada = COALESCE(fecha_estimada, '')
+            WHERE fecha_estimada IS NULL
+            """
         )

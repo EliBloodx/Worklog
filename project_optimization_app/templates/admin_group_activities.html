@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Actividades grupales{% endblock %}
+
+{% block page_title %}Actividades grupales{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="page-header-title">
+        <i class="bi bi-people me-2 text-primary"></i>Actividades grupales
+    </h1>
+    <a class="btn btn-outline-secondary" href="{{ url_for('records.admin_catalogo') }}">
+        <i class="bi bi-arrow-left me-1"></i>Volver al panel
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Crear actividad grupal</h2>
+        <form method="post" class="row g-3">
+            <input type="hidden" name="action" value="create_group_activity">
+            <div class="col-md-4">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-control" name="fecha" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha estimada</label>
+                <input type="date" class="form-control" name="fecha_estimada" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Categoria</label>
+                <select class="form-select" id="groupActivityCategory" name="categoria" required>
+                    <option value="">Selecciona una categoria</option>
+                    {% for key, category in activity_catalog.items() %}
+                    <option value="{{ key }}">{{ category.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Actividad</label>
+                <select class="form-select" id="groupActivityName" name="actividad" required>
+                    <option value="">Selecciona una categoria primero</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Identificador interno</label>
+                <input type="text" class="form-control" name="identificador_interno" placeholder="Ej: GA-024" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Descripcion</label>
+                <textarea class="form-control" name="descripcion" rows="3" required></textarea>
+            </div>
+            <div class="col-12 d-grid d-md-flex justify-content-md-end">
+                <button class="btn btn-primary" type="submit">Crear actividad grupal</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Actividades registradas</h2>
+        {% if group_activities %}
+        <div class="d-grid gap-3">
+            {% for activity in group_activities %}
+            <div class="border rounded-4 p-3 p-md-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                    <div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <h3 class="h6 mb-0">{{ activity.actividad }}</h3>
+                            <span class="badge {{ 'text-bg-warning' if activity.estado == 'en_progreso' else 'text-bg-success' }}">{{ activity.estado }}</span>
+                        </div>
+                        <p class="mb-1 small text-muted">{{ activity.categoria_label }} · {{ activity.identificador_interno }}</p>
+                        <p class="mb-1 small text-muted">Fecha: {{ activity.fecha }} · Estimada: {{ activity.fecha_estimada }}</p>
+                        <p class="mb-0">{{ activity.descripcion }}</p>
+                    </div>
+                    <div class="text-md-end">
+                        <p class="mb-1 small text-muted">Participantes: {{ activity.participant_count }}</p>
+                        <p class="mb-1 small text-muted">Horas acumuladas: {{ '%.2f'|format(activity.total_hours) }} h</p>
+                        {% if activity.estado == 'en_progreso' %}
+                        <form method="post" onsubmit="return confirm('¿Cerrar esta actividad grupal?')">
+                            <input type="hidden" name="action" value="close_group_activity">
+                            <input type="hidden" name="group_activity_id" value="{{ activity.id }}">
+                            <button class="btn btn-outline-danger btn-sm" type="submit">Cerrar</button>
+                        </form>
+                        {% else %}
+                        <span class="badge text-bg-secondary">Cerrada</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Todavia no hay actividades grupales creadas.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	var catalog = {{ activity_catalog|tojson }};
+	var categorySelect = document.getElementById('groupActivityCategory');
+	var activitySelect = document.getElementById('groupActivityName');
+
+	if (!categorySelect || !activitySelect) {
+		return;
+	}
+
+	var fillActivities = function (categoryKey) {
+		activitySelect.innerHTML = '';
+		var defaultOption = document.createElement('option');
+		defaultOption.value = '';
+		defaultOption.textContent = categoryKey ? 'Selecciona una actividad' : 'Selecciona una categoria primero';
+		activitySelect.appendChild(defaultOption);
+
+		if (!categoryKey || !catalog[categoryKey]) {
+			activitySelect.disabled = true;
+			return;
+		}
+
+		activitySelect.disabled = false;
+		var options = catalog[categoryKey].project_options || [];
+		for (var i = 0; i < options.length; i += 1) {
+			var option = document.createElement('option');
+			option.value = options[i];
+			option.textContent = options[i];
+			activitySelect.appendChild(option);
+		}
+	};
+
+	fillActivities(categorySelect.value);
+	categorySelect.addEventListener('change', function () {
+		fillActivities(categorySelect.value);
+	});
+});
+</script>
+{% endblock %}

@@ -48,6 +48,7 @@ def insert_record(data: dict[str, Any]) -> None:
             INSERT INTO registros (
                 user_id,
                 fecha,
+                fecha_estimada,
                 categoria,
                 proyecto_equipo,
                 cliente_referencia,
@@ -56,13 +57,15 @@ def insert_record(data: dict[str, Any]) -> None:
                 descripcion,
                 hora_inicio,
                 hora_fin,
-                horas_totales
+                horas_totales,
+                group_activity_id
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 data["user_id"],
                 data["fecha"],
+                data.get("fecha_estimada") or "",
                 data["categoria"],
                 data["proyecto_equipo"],
                 data["cliente_referencia"],
@@ -72,6 +75,7 @@ def insert_record(data: dict[str, Any]) -> None:
                 data["hora_inicio"],
                 data["hora_fin"],
                 data["horas_totales"],
+                data.get("group_activity_id"),
             ),
         )
 
@@ -82,6 +86,7 @@ def update_record(record_id: int, data: dict[str, Any]) -> bool:
             """
             UPDATE registros
             SET fecha = ?,
+                fecha_estimada = COALESCE(?, fecha_estimada),
                 categoria = ?,
                 proyecto_equipo = ?,
                 cliente_referencia = ?,
@@ -95,6 +100,7 @@ def update_record(record_id: int, data: dict[str, Any]) -> bool:
             """,
             (
                 data["fecha"],
+                data.get("fecha_estimada") or None,
                 data["categoria"],
                 data["proyecto_equipo"],
                 data["cliente_referencia"],
@@ -300,8 +306,7 @@ def count_quick_incomplete_records(user_id: int) -> int:
         SELECT COUNT(*) AS total
         FROM registros
         WHERE user_id = ?
-          AND estado = 'pendiente'
-          AND actividad = 'Registro rapido'
+                    AND estado = 'en_progreso'
           AND COALESCE(hora_fin, '') = ''
     """
 

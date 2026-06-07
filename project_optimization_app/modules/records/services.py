@@ -332,6 +332,7 @@ def build_excel(registros, total_horas: float) -> bytes:
     rows = [
         {
             "Fecha": r["fecha"],
+            "Fecha estimada": r["fecha_estimada"],
             "Categoria": catalog.get(r["categoria"], {}).get("label", r["categoria"]),
             "Proyecto/Equipo": r["proyecto_equipo"],
             "Cliente/Codigo/Proyecto": r["cliente_referencia"],
@@ -366,17 +367,19 @@ def build_excel(registros, total_horas: float) -> bytes:
             ws.column_dimensions[col[0].column_letter].width = max(max_len + 4, 12)
 
         total_row = len(df) + 2
-        ws.cell(row=total_row, column=6).value = "TOTAL"
-        ws.cell(row=total_row, column=6).font = _TOTAL_FONT
-        ws.cell(row=total_row, column=7).value = round(total_horas, 2)
-        ws.cell(row=total_row, column=7).font = _TOTAL_FONT
-        for col_idx in range(6, 8):
+        total_label_col = len(df.columns) - 1
+        total_value_col = len(df.columns)
+        ws.cell(row=total_row, column=total_label_col).value = "TOTAL"
+        ws.cell(row=total_row, column=total_label_col).font = _TOTAL_FONT
+        ws.cell(row=total_row, column=total_value_col).value = round(total_horas, 2)
+        ws.cell(row=total_row, column=total_value_col).font = _TOTAL_FONT
+        for col_idx in range(total_label_col, total_value_col + 1):
             ws.cell(row=total_row, column=col_idx).fill = _TOTAL_FILL
 
     return output.getvalue()
 
 
-def normalize_form_data(form_data: dict[str, str]) -> dict[str, str | float]:
+def normalize_form_data(form_data: dict[str, str]) -> dict[str, str | float | None]:
     catalog = get_activity_catalog()
     valid_states = {state["value"] for state in get_state_options()}
 
@@ -399,6 +402,7 @@ def normalize_form_data(form_data: dict[str, str]) -> dict[str, str | float]:
         raise ValueError("La actividad seleccionada no es valida para la categoria")
 
     cliente_referencia = form_data.get("cliente_referencia", "").strip()
+    fecha_estimada = form_data.get("fecha_estimada", "").strip() or None
 
     hora_fin_raw = form_data.get("hora_fin", "").strip()
     is_open_task = not hora_fin_raw
@@ -429,6 +433,7 @@ def normalize_form_data(form_data: dict[str, str]) -> dict[str, str | float]:
         hours = calculate_hours(form_data["hora_inicio"], hora_fin_raw)
     return {
         "fecha": form_data["fecha"],
+        "fecha_estimada": fecha_estimada,
         "categoria": categoria,
         "proyecto_equipo": proyecto_equipo,
         "cliente_referencia": cliente_referencia,

@@ -5,6 +5,7 @@ from flask import Blueprint, flash, redirect, render_template, request, send_fil
 from flask_login import current_user, login_required
 
 from modules.auth import get_user_by_id
+from modules.group_activities import build_user_group_activities_context
 from modules.records import (
     add_activity_option,
     add_category,
@@ -69,6 +70,7 @@ def mi_inicio():
         user_id=current_user.id,
         subject_user=current_user,
     )
+    context.update(build_user_group_activities_context(current_user.id))
     return render_template("user_home.html", **context)
 
 
