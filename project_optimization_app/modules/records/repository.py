@@ -60,7 +60,7 @@ def insert_record(data: dict[str, Any]) -> None:
                 horas_totales,
                 group_activity_id
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 data["user_id"],
